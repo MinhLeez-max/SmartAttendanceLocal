@@ -1,0 +1,1311 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: attendance
+    description: Class and attendance operations
+  - name: authentication
+    description: Signed-in accounts, roles, and QR check-in
+paths:
+  /academic/catalog:
+    get:
+      operationId: getAcademicCatalog
+      tags: [academic]
+      responses:
+        "200":
+          description: Academic reference data within account scope
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcademicCatalog" }
+  /academic/catalog/{kind}:
+    parameters:
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [cohorts, semesters, subjects, rooms] } }
+    post:
+      operationId: createAcademicCatalogItem
+      tags: [academic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CatalogInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CatalogItem" }
+  /academic/catalog/{kind}/{id}:
+    parameters:
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [cohorts, semesters, subjects, rooms] } }
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    patch:
+      operationId: updateAcademicCatalogItem
+      tags: [academic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CatalogInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CatalogItem" }
+  /academic/students:
+    get:
+      operationId: listAcademicStudents
+      tags: [academic]
+      responses:
+        "200":
+          description: Student directory for administrators
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/AcademicStudent" } }
+    post:
+      operationId: createAcademicStudent
+      tags: [academic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AcademicStudentInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcademicStudent" }
+  /academic/students/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    patch:
+      operationId: updateAcademicStudent
+      tags: [academic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AcademicStudentInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcademicStudent" }
+  /academic/sections:
+    get:
+      operationId: listAcademicSections
+      tags: [academic]
+      responses:
+        "200":
+          description: Scoped course sections
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/AcademicSection" } }
+    post:
+      operationId: createAcademicSection
+      tags: [academic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AcademicSectionInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcademicSection" }
+  /academic/sections/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    patch:
+      operationId: updateAcademicSection
+      tags: [academic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AcademicSectionInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcademicSection" }
+  /academic/lessons:
+    get:
+      operationId: listAcademicLessons
+      tags: [academic]
+      parameters:
+        - { name: weekStart, in: query, schema: { type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$" } }
+        - { name: classId, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          description: Scoped timetable week in Asia/Ho_Chi_Minh
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/AcademicLesson" } }
+    post:
+      operationId: createAcademicLessons
+      tags: [academic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LessonSeriesInput" }
+      responses:
+        "201":
+          description: Created concrete lessons after conflict checks
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/AcademicLesson" } }
+  /academic/lessons/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    patch:
+      operationId: updateAcademicLesson
+      tags: [academic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LessonUpdateInput" }
+      responses:
+        "200":
+          description: Updated or cancelled lesson
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcademicLesson" }
+  /academic/my-attendance:
+    get:
+      operationId: getMyAcademicAttendance
+      tags: [academic]
+      parameters:
+        - { name: semesterId, in: query, schema: { type: integer } }
+        - { name: subjectId, in: query, schema: { type: integer } }
+        - { name: classId, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          description: Only the signed-in student's attendance
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PersonalAttendance" }
+  /attendance/{recordId}/history:
+    parameters:
+      - { name: recordId, in: path, required: true, schema: { type: integer } }
+    get:
+      operationId: listAttendanceHistory
+      tags: [academic]
+      responses:
+        "200":
+          description: Scoped correction audit trail
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/AttendanceAudit" } }
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /auth/me:
+    get:
+      operationId: getCurrentSchoolUser
+      tags: [authentication]
+      summary: Get the signed-in school account and role
+      responses:
+        "200":
+          description: Current account
+          content:
+            application/json:
+              schema:
+                 $ref: "#/components/schemas/SchoolUser"
+  /auth/bootstrap-status:
+    get:
+      operationId: getSchoolBootstrapStatus
+      tags: [authentication]
+      summary: Check whether the first school admin can be created
+      responses:
+        "200":
+          description: Bootstrap availability
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SchoolBootstrapStatus"
+  /admin/users:
+    get:
+      operationId: listSchoolUsers
+      tags: [authentication]
+      summary: List accounts for role assignment
+      responses:
+        "200":
+          description: School accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SchoolUser"
+  /admin/invitations:
+    get:
+      operationId: listSchoolInvitations
+      tags: [authentication]
+      summary: List school account invitations
+      responses:
+        "200":
+          description: School invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SchoolInvitation"
+    post:
+      operationId: createSchoolInvitation
+      tags: [authentication]
+      summary: Invite an email address to the school
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSchoolInvitationInput"
+      responses:
+        "201":
+          description: Invitation sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SchoolInvitation"
+  /admin/invitations/{invitationId}:
+    parameters:
+      - name: invitationId
+        in: path
+        required: true
+        schema:
+          type: integer
+    delete:
+      operationId: revokeSchoolInvitation
+      tags: [authentication]
+      summary: Revoke a pending school invitation
+      responses:
+        "200":
+          description: Invitation revoked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SchoolInvitation"
+  /admin/users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: integer
+    patch:
+      operationId: updateSchoolUser
+      tags: [authentication]
+      summary: Assign an account role and school records
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SchoolUserUpdateInput"
+      responses:
+        "200":
+          description: Updated account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SchoolUser"
+  /qr/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getQrCheckInSession
+      tags: [authentication]
+      summary: Validate a QR for a signed-in student
+      responses:
+        "200":
+          description: Session details without other student data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckInSessionInfo"
+        "404":
+          description: QR is invalid, expired, or closed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "409":
+          description: Classroom location has not been configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /qr/{token}/check-in:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: createQrStudentCheckIn
+      tags: [authentication]
+      summary: Check in the signed-in student automatically
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QrCheckInLocation"
+      responses:
+        "201":
+          description: Attendance recorded for the student
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceRecord"
+        "409":
+          description: Student has already checked in or classroom location is missing
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/AttendanceRecord"
+                  - $ref: "#/components/schemas/ApiError"
+        "400":
+          description: Student account is not linked to a class roster entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Student is outside the configured classroom radius
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "422":
+          description: Device location is not precise enough
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /attendance/overview:
+    get:
+      operationId: getAttendanceOverview
+      tags: [attendance]
+      summary: Get dashboard overview
+      responses:
+        "200":
+          description: Dashboard overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceOverview"
+  /classes:
+    get:
+      operationId: listClasses
+      tags: [attendance]
+      summary: List classes
+      responses:
+        "200":
+          description: Classes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Classroom"
+    post:
+      operationId: createClass
+      tags: [attendance]
+      summary: Create a class
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassInput"
+      responses:
+        "201":
+          description: Created class
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Classroom"
+  /classes/{classId}/location:
+    parameters:
+      - name: classId
+        in: path
+        required: true
+        schema:
+          type: integer
+    patch:
+      operationId: setClassLocation
+      tags: [attendance]
+      summary: Set a classroom geofence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassLocationInput"
+      responses:
+        "200":
+          description: Updated classroom location
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Classroom"
+        "400":
+          description: Invalid classroom location
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Class not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /classes/{classId}/students:
+    parameters:
+      - name: classId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: listClassStudents
+      tags: [attendance]
+      summary: List students in a class
+      responses:
+        "200":
+          description: Students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Student"
+    post:
+      operationId: createClassStudent
+      tags: [attendance]
+      summary: Add a student to a class roster
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudentInput"
+      responses:
+        "201":
+          description: Student added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Student"
+  /sessions:
+    get:
+      operationId: listAttendanceSessions
+      tags: [attendance]
+      summary: List attendance sessions
+      parameters:
+        - name: classId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Attendance sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AttendanceSession"
+    post:
+      operationId: createAttendanceSession
+      tags: [attendance]
+      summary: Start an attendance session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttendanceSessionInput"
+      responses:
+        "201":
+          description: Started attendance session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceSession"
+        "409":
+          description: Classroom location has not been configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /sessions/{sessionId}:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: getAttendanceSession
+      tags: [attendance]
+      summary: Get session details
+      responses:
+        "200":
+          description: Attendance session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceSession"
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /sessions/{sessionId}/close:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      operationId: closeAttendanceSession
+      tags: [attendance]
+      summary: Close an attendance session
+      responses:
+        "200":
+          description: Closed session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceSession"
+  /sessions/{sessionId}/check-ins:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: listSessionCheckIns
+      tags: [attendance]
+      summary: List check-ins for a session
+      responses:
+        "200":
+          description: Check-in records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AttendanceRecord"
+    post:
+      operationId: createSessionCheckIn
+      tags: [attendance]
+      summary: Record student attendance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckInInput"
+      responses:
+        "201":
+          description: Recorded attendance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceRecord"
+        "400":
+          description: Invalid token or session is closed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /attendance/{recordId}:
+    parameters:
+      - name: recordId
+        in: path
+        required: true
+        schema:
+          type: integer
+    patch:
+      operationId: updateAttendanceRecord
+      tags: [attendance]
+      summary: Correct an attendance record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttendanceUpdate"
+      responses:
+        "200":
+          description: Updated attendance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceRecord"
+  /sessions/{sessionId}/counts:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      operationId: createCountSnapshot
+      tags: [attendance]
+      summary: Save an aggregate camera count
+      description: Stores only aggregate counts and confidence, never a frame or identity.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CountSnapshotInput"
+      responses:
+        "201":
+          description: Count snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CountSnapshot"
+  /sessions/{sessionId}/reconciliation:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: getSessionReconciliation
+      tags: [attendance]
+      summary: Compare QR attendance with the latest aggregate count
+      responses:
+        "200":
+          description: Reconciliation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reconciliation"
+  /reports/attendance:
+    get:
+      operationId: getAttendanceReport
+      tags: [attendance]
+      summary: Get attendance summary
+      parameters:
+        - { name: semesterId, in: query, schema: { type: integer } }
+        - { name: subjectId, in: query, schema: { type: integer } }
+        - { name: studentId, in: query, schema: { type: integer } }
+        - name: classId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Attendance report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceReport"
+components:
+  schemas:
+    CatalogInput:
+      type: object
+      required: [code, name, active]
+      properties:
+        code: { type: string, minLength: 1, maxLength: 60 }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        active: { type: boolean }
+        startDate: { type: [string, "null"], pattern: "^\\d{4}-\\d{2}-\\d{2}$" }
+        endDate: { type: [string, "null"], pattern: "^\\d{4}-\\d{2}-\\d{2}$" }
+        faculty: { type: [string, "null"], maxLength: 200 }
+        major: { type: [string, "null"], maxLength: 200 }
+        latitude: { type: [number, "null"], minimum: -90, maximum: 90 }
+        longitude: { type: [number, "null"], minimum: -180, maximum: 180 }
+        checkInRadiusMeters: { type: integer, minimum: 10, maximum: 500, default: 50 }
+    CatalogItem:
+      type: object
+      required: [id, code, name, active, startDate, endDate, faculty, major, latitude, longitude, checkInRadiusMeters]
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        active: { type: boolean }
+        startDate: { type: [string, "null"] }
+        endDate: { type: [string, "null"] }
+        faculty: { type: [string, "null"] }
+        major: { type: [string, "null"] }
+        latitude: { type: [number, "null"] }
+        longitude: { type: [number, "null"] }
+        checkInRadiusMeters: { type: integer }
+    AcademicCatalog:
+      type: object
+      required: [cohorts, semesters, subjects, rooms]
+      properties:
+        cohorts: { type: array, items: { $ref: "#/components/schemas/CatalogItem" } }
+        semesters: { type: array, items: { $ref: "#/components/schemas/CatalogItem" } }
+        subjects: { type: array, items: { $ref: "#/components/schemas/CatalogItem" } }
+        rooms: { type: array, items: { $ref: "#/components/schemas/CatalogItem" } }
+    AcademicStudentInput:
+      type: object
+      required: [fullName, studentCode, cohortId, active]
+      properties:
+        fullName: { type: string, minLength: 1, maxLength: 200 }
+        studentCode: { type: string, minLength: 1, maxLength: 60 }
+        cohortId: { type: [integer, "null"] }
+        active: { type: boolean }
+    AcademicStudent:
+      type: object
+      required: [id, fullName, studentCode, cohortId, cohortName, active, accountId]
+      properties:
+        id: { type: integer }
+        fullName: { type: string }
+        studentCode: { type: string }
+        cohortId: { type: [integer, "null"] }
+        cohortName: { type: [string, "null"] }
+        active: { type: boolean }
+        accountId: { type: [integer, "null"] }
+    AcademicSectionInput:
+      type: object
+      required: [code, name, subjectId, semesterId, roomId, teacherIds, studentIds, active]
+      properties:
+        code: { type: string, minLength: 1, maxLength: 60 }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        subjectId: { type: integer }
+        semesterId: { type: integer }
+        roomId: { type: integer }
+        teacherIds: { type: array, items: { type: integer } }
+        studentIds: { type: array, items: { type: integer } }
+        active: { type: boolean }
+    AcademicSection:
+      type: object
+      required: [id, code, name, subject, room, subjectId, semesterId, roomId, active, teacherIds, studentIds, studentCount, needsSetup]
+      properties:
+        id: { type: integer }
+        code: { type: [string, "null"] }
+        name: { type: string }
+        subject: { type: string }
+        room: { type: string }
+        subjectId: { type: [integer, "null"] }
+        semesterId: { type: [integer, "null"] }
+        roomId: { type: [integer, "null"] }
+        active: { type: boolean }
+        teacherIds: { type: array, items: { type: integer } }
+        studentIds: { type: array, items: { type: integer } }
+        studentCount: { type: integer }
+        needsSetup: { type: array, items: { type: string } }
+    LessonSeriesInput:
+      type: object
+      required: [classId, teacherId, roomId, startDate, endDate, startsAt, endsAt]
+      properties:
+        classId: { type: integer }
+        teacherId: { type: integer }
+        roomId: { type: integer }
+        startDate: { type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$" }
+        endDate: { type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$" }
+        weekday: { type: [integer, "null"], minimum: 0, maximum: 6, description: "0 Sunday through 6 Saturday; null means one date" }
+        startsAt: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+        endsAt: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+    LessonUpdateInput:
+      type: object
+      required: [date, startsAt, endsAt, teacherId, roomId, status, reason]
+      properties:
+        date: { type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$" }
+        startsAt: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+        endsAt: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+        teacherId: { type: integer }
+        roomId: { type: integer }
+        status: { type: string, enum: [scheduled, cancelled] }
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    AcademicLesson:
+      type: object
+      required: [id, classId, className, subject, semesterId, teacherId, teacherName, roomId, roomName, startsAt, endsAt, status, reason, sessionId]
+      properties:
+        id: { type: integer }
+        classId: { type: integer }
+        className: { type: string }
+        subject: { type: string }
+        semesterId: { type: [integer, "null"] }
+        teacherId: { type: integer }
+        teacherName: { type: string }
+        roomId: { type: integer }
+        roomName: { type: string }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        status: { type: string, enum: [scheduled, cancelled] }
+        reason: { type: [string, "null"] }
+        sessionId: { type: [integer, "null"] }
+    PersonalAttendanceRow:
+      type: object
+      required: [id, classId, className, subject, semesterId, date, status, note]
+      properties:
+        id: { type: integer }
+        classId: { type: integer }
+        className: { type: string }
+        subject: { type: string }
+        semesterId: { type: [integer, "null"] }
+        date: { type: string, format: date-time }
+        status: { type: string, enum: [present, late, absent] }
+        note: { type: [string, "null"] }
+    PersonalAttendance:
+      type: object
+      required: [present, late, absent, rows]
+      properties:
+        present: { type: integer }
+        late: { type: integer }
+        absent: { type: integer }
+        rows: { type: array, items: { $ref: "#/components/schemas/PersonalAttendanceRow" } }
+    AttendanceAudit:
+      type: object
+      required: [id, recordId, actorName, beforeStatus, afterStatus, reason, createdAt]
+      properties:
+        id: { type: integer }
+        recordId: { type: integer }
+        actorName: { type: string }
+        beforeStatus: { type: string }
+        afterStatus: { type: string }
+        reason: { type: string }
+        createdAt: { type: string, format: date-time }
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    SchoolUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        displayName:
+          type: string
+        phone: { type: [string, "null"] }
+        faculty: { type: [string, "null"] }
+        major: { type: [string, "null"] }
+        staffCode: { type: [string, "null"] }
+        active: { type: boolean }
+        cohortId: { type: [integer, "null"] }
+        cohortName: { type: [string, "null"] }
+        role:
+          type: string
+          enum: [admin, teacher, student, pending]
+        studentId:
+          type: [integer, "null"]
+        studentCode:
+          type: [string, "null"]
+        studentName:
+          type: [string, "null"]
+        classIds:
+          type: array
+          items:
+            type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, email, displayName, phone, faculty, major, staffCode, active, cohortId, cohortName, role, studentId, studentCode, studentName, classIds, createdAt]
+    SchoolBootstrapStatus:
+      type: object
+      properties:
+        available:
+          type: boolean
+      required: [available]
+    SchoolInvitation:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        status:
+          type: string
+          enum: [pending, accepted, revoked, expired]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, email, status, createdAt]
+    CreateSchoolInvitationInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+      required: [email]
+    SchoolUserUpdateInput:
+      type: object
+      properties:
+        studentCode: { type: string, minLength: 1, maxLength: 60 }
+        displayName: { type: string, minLength: 1, maxLength: 200 }
+        phone: { type: [string, "null"], maxLength: 30 }
+        faculty: { type: [string, "null"], maxLength: 200 }
+        major: { type: [string, "null"], maxLength: 200 }
+        staffCode: { type: [string, "null"], maxLength: 60 }
+        active: { type: boolean }
+        role:
+          type: string
+          enum: [admin, teacher, student, pending]
+        studentId:
+          type: [integer, "null"]
+        classIds:
+          type: array
+          items:
+            type: integer
+      required: [role, studentId, classIds]
+    CheckInSessionInfo:
+      type: object
+      properties:
+        sessionId:
+          type: integer
+        className:
+          type: string
+        subject:
+          type: string
+        qrExpiresAt:
+          type: string
+          format: date-time
+        checkInRadiusMeters:
+          type: integer
+      required: [sessionId, className, subject, qrExpiresAt, checkInRadiusMeters]
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    Classroom:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        subject:
+          type: string
+        room:
+          type: string
+        studentCount:
+          type: integer
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+        checkInRadiusMeters:
+          type: integer
+      required: [id, name, subject, room, studentCount, latitude, longitude, checkInRadiusMeters]
+    ClassLocationInput:
+      type: object
+      properties:
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+        checkInRadiusMeters:
+          type: integer
+          minimum: 10
+          maximum: 500
+      required: [latitude, longitude, checkInRadiusMeters]
+    QrCheckInLocation:
+      type: object
+      properties:
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+        accuracyMeters:
+          type: number
+          minimum: 0
+      required: [latitude, longitude, accuracyMeters]
+    ClassInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        subject:
+          type: string
+          minLength: 1
+        room:
+          type: string
+          minLength: 1
+      required: [name, subject, room]
+    Student:
+      type: object
+      properties:
+        id:
+          type: integer
+        classId:
+          type: [integer, "null"]
+        fullName:
+          type: string
+        studentCode:
+          type: string
+        attendanceRate:
+          type: [number, "null"]
+      required: [id, classId, fullName, studentCode, attendanceRate]
+    StudentInput:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        studentCode:
+          type: string
+          minLength: 1
+      required: [fullName, studentCode]
+    AttendanceSession:
+      type: object
+      properties:
+        id:
+          type: integer
+        classId:
+          type: integer
+        lessonId: { type: [integer, "null"] }
+        className:
+          type: string
+        subject:
+          type: string
+        status:
+          type: string
+          enum: [active, closed]
+        startedAt:
+          type: string
+          format: date-time
+        endedAt:
+          type: [string, "null"]
+          format: date-time
+        qrToken:
+          type: string
+        qrExpiresAt:
+          type: string
+          format: date-time
+        studentCount:
+          type: integer
+        checkedInCount:
+          type: integer
+      required: [id, classId, className, subject, status, startedAt, endedAt, qrToken, qrExpiresAt, studentCount, checkedInCount]
+    AttendanceSessionInput:
+      type: object
+      properties:
+        lessonId: { type: integer }
+        classId:
+          type: integer
+      required: [classId]
+    CheckInInput:
+      type: object
+      properties:
+        studentCode:
+          type: string
+          minLength: 1
+        qrToken:
+          type: string
+          minLength: 1
+        note:
+          type: string
+          minLength: 3
+          maxLength: 1000
+      required: [studentCode, qrToken, note]
+    AttendanceRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        sessionId:
+          type: integer
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        studentCode:
+          type: string
+        status:
+          type: string
+          enum: [present, late, absent]
+        checkedInAt:
+          type: [string, "null"]
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, sessionId, studentId, studentName, studentCode, status, checkedInAt, updatedAt]
+    AttendanceUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [present, late, absent]
+        note:
+          type: string
+          minLength: 3
+          maxLength: 1000
+      required: [status, note]
+    CountSnapshotInput:
+      type: object
+      properties:
+        estimatedCount:
+          type: integer
+          minimum: 0
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        source:
+          type: string
+          enum: [camera, demo]
+      required: [estimatedCount, confidence, source]
+    CountSnapshot:
+      type: object
+      properties:
+        id:
+          type: integer
+        sessionId:
+          type: integer
+        estimatedCount:
+          type: integer
+        confidence:
+          type: number
+        source:
+          type: string
+          enum: [camera, demo]
+        capturedAt:
+          type: string
+          format: date-time
+      required: [id, sessionId, estimatedCount, confidence, source, capturedAt]
+    Reconciliation:
+      type: object
+      properties:
+        sessionId:
+          type: integer
+        checkedInCount:
+          type: integer
+        estimatedCount:
+          type: [integer, "null"]
+        difference:
+          type: [integer, "null"]
+        confidence:
+          type: [number, "null"]
+        source:
+          type: [string, "null"]
+          enum: [camera, demo, null]
+        capturedAt:
+          type: [string, "null"]
+          format: date-time
+        needsReview:
+          type: boolean
+        message:
+          type: string
+      required: [sessionId, checkedInCount, estimatedCount, difference, confidence, source, capturedAt, needsReview, message]
+    OverviewActivity:
+      type: object
+      properties:
+        id:
+          type: integer
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, message, createdAt]
+    AttendanceOverview:
+      type: object
+      properties:
+        classCount:
+          type: integer
+        studentCount:
+          type: integer
+        sessionsToday:
+          type: integer
+        averageAttendanceRate:
+          type: [number, "null"]
+        activeSession:
+          anyOf:
+            - $ref: "#/components/schemas/AttendanceSession"
+            - type: "null"
+        recentSessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttendanceSession"
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/OverviewActivity"
+      required: [classCount, studentCount, sessionsToday, averageAttendanceRate, activeSession, recentSessions, activities]
+    AttendanceReportRow:
+      type: object
+      properties:
+        classId:
+          type: integer
+        className:
+          type: string
+        studentCount:
+          type: integer
+        attendanceRate:
+          type: [number, "null"]
+        sessionsCount:
+          type: integer
+      required: [classId, className, studentCount, attendanceRate, sessionsCount]
+    AttendanceReport:
+      type: object
+      properties:
+        overallAttendanceRate:
+          type: [number, "null"]
+        totalSessions:
+          type: integer
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttendanceReportRow"
+      required: [overallAttendanceRate, totalSessions, rows]
+

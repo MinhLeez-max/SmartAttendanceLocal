@@ -1,0 +1,25 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "dev": "node --env-file=.env tools/run.mjs dev",
+    "build": "node --env-file=.env tools/run.mjs build",
+    "start": "node --env-file=.env tools/run.mjs start",
+    "check": "node --env-file=.env tools/check.mjs",
+    "test:sql": "node --env-file=.env tools/run.mjs test",
+    "test:offline": "tsx --test lib/db/src/offline.test.ts artifacts/api-server/src/lib/invitation-url.test.ts",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm --filter @workspace/api-server run typecheck && pnpm --filter @workspace/smart-attendance run typecheck"
+  },
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "typescript": "~5.9.3",
+    "tsx": "^4.20.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@10.26.1"
+}

@@ -1,0 +1,10 @@
+{
+  "edition": "Windows SQL Server 2022",
+  "database": "SmartAttendanceLocal",
+  "schemaVersion": 1,
+  "tables": 12,
+  "orm": "drizzle-orm 1.0.0-rc.5 (native SQL Server dialect)",
+  "existingReplitDataIncluded": false,
+  "credentialsIncluded": false,
+  "validation": "See VERIFICATION.md. A SQL Server runtime was not available in the Replit workspace; run pnpm check and pnpm test:sql on Windows."
+}

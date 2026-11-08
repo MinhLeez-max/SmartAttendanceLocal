@@ -1,0 +1,30 @@
+import { Router, type IRouter } from "express";
+import healthRouter from "./health";
+import attendanceRouter from "./attendance";
+import authRouter, { publicAuthRouter } from "./auth";
+import studentCheckInRouter from "./student-check-in";
+import academicCatalogRouter from "./academic-catalog";
+import academicSectionsRouter from "./academic-sections";
+import academicLessonsRouter from "./academic-lessons";
+import academicPersonalRouter from "./academic-personal";
+import { requireRole, requireSchoolUser } from "../middlewares/schoolAuth";
+import { academicAction, reconcileScheduledSessions } from "../lib/academic-domain";
+const router: IRouter = Router();
+router.use(healthRouter);
+router.use(publicAuthRouter);
+router.use(requireSchoolUser);
+// Every authenticated read (including reports/history) observes effective lesson endings.
+router.use(academicAction(async (_req, _res, next) => {
+    await reconcileScheduledSessions();
+    next();
+}));
+router.use(authRouter);
+router.use(studentCheckInRouter);
+router.use("/academic", requireRole("admin", "teacher", "student"));
+router.use(academicCatalogRouter);
+router.use(academicSectionsRouter);
+router.use(academicLessonsRouter);
+router.use(academicPersonalRouter);
+router.use(requireRole("admin", "teacher"));
+router.use(attendanceRouter);
+export default router;
